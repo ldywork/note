@@ -1,0 +1,226 @@
+1.每个mongodb都有自己的默认数据库 就是在data下面的名字是db的数据库
+
+2.（1）show dbs 来显示所有的数据列表
+   （2）执行db可以显示当前数据库对象或者集合
+   （3）user test 连接到指定数据库  如果没有就创建一个数据库
+   （4）mongodb数据库名称应全部小写
+   （5）有一些数据库是保留的：eg（admin root权限数据库   local用来存储限于本地单台服务器的任意集合，不会被复制
+			config保存分片的信息）
+
+3.集合相当于表  文档是集合下一级   一个文档相当于一条数据这样  文档中的数据为BSON
+   一条数据中也就是文档中的1.键值对是有序的   2.文档中值可以是一个文档 3.Mongo区分大小写 和类型 
+			4.Mongo的一条数据不能有重复的key 5.文档的key是字符串，是utf-8  可以是任意的utf-8  但必须utf-8
+
+4.文档键以下划线_开头的是保留的
+
+5.db.createCollection("myCollection",{"capped:true ,size=100000'})
+	capped Collection 是有固定长度的集合  它是非常高效的自动维护对象插入顺序的一种集合  可以用来存储日志啊 
+	为何高效？  因为它不用索引 而是直接就是有存入的顺序 
+
+6.数据库的系统信息存储在system中
+	dbname.system.namespaces   列出所有名称空间
+	dbname.system.indexs         列出所有索引
+	dbname.system.profile         列出数据库概要信息
+	dbname.system.users           列出所有可访问数据库的用户
+	dbname.local.sources           包含复制对端（slave）的服务器信息和状态
+	{{system.indexes}}  插入数据  创建索引
+	{{system.users}}  是可以修改的
+	{{system.profile}}  数据库概要信息是可以删除的
+
+7.Mongodb的数据类型
+	String  Integer Boolean Double 
+	Array ：数组，将多个值存储为一个键
+	Date  ：
+	Timestamp： 
+	NULL: 空值
+	Object： 用于内嵌文档
+	Symbol： 带有特殊符号的字符串类型
+	ObjectId： 对象id，（也就是说   值也可以是文档的id）
+	Binary Data：二进制数据
+	Code： 可以存储JavaScript
+	Regular expression：可以存储正则表达式
+
+	ObjectId 很强大  它有12个bytes  
+		前四个字节是时间戳  unix   比北京晚八个小时
+		接下来的三个是 机器的识别码
+		接着是进程的id  PID
+		最后是随机数
+		（所以整个它包含了  时间 哪台机器  开了哪个进程  很强大）
+
+9.  mongodb每个文档的主键  也是我们强大的  _id
+		（1）我们在Robo 3T中 打开collection 以后找到我们的insurDTO collection  
+		      双击以后 这时候就可以看到一堆的文档   （！而文档的名字就是我们的 _id   ）（也是每个文档主键的名字）
+		（2）！ 至于我们_id的值  可以是任意类型的   同事 它的默认值 就是我们的objectId  
+				所以说如果我们要时间 可以不用存  直接ObjectId().getTimestamp()
+						 		=ISODate("2017-11-25T07:21:10Z")
+10. mongodb的编码 都是utf-8的
+		BSON 时间戳类型主要用于 MongoDB 内部使用。在大多数情况下的应用开发中，你可以使用 BSON 日期类型。	
+    			前32位是一个 time_t 值（与Unix新纪元相差的秒数）
+    			后32位是在某秒中操作的一个递增的序数
+
+		new Date() 
+		ISODate("2018-03-04T14:58:51.233Z")
+		
+		> Date()
+		Sun Mar 04 2018 15:02:59 GMT+0000 (UTC)  
+
+
+
+
+	
+	
+	注意：mysql中的函数curdate 是2019-07-03     now（）和current_Timestamps 都是2019-07-03 10：00：00
+
+11.使用mongodb
+	use runoob
+	show dbs
+	db
+	db.runoob.insert({"name":"菜鸟教程"})
+	show dbs                --->OK
+
+12.MongoDB 中默认的数据库为 test，如果你没有创建新的数据库，集合将存放在 test 数据库中。
+
+13.注意: 在 MongoDB 中，集合只有在内容插入后才会创建! 就是说，创建集合(数据表)后要再插入一个文档(记录)，集合才会真正创建。
+
+14删除数据库
+	db.dropDatabase();
+15删除集合
+	db.createCollection("testCollection");
+	db.testcollection.drop();
+	show tables
+
+16创建集合时  
+	如果你没有这个集合 你还直接这样做 > db.testCollection.insert({"name":"value"})
+	它会自动为你创建这个testCollection的集合
+
+17插入文档
+	db.testCollection.insert({"name":"zhangsan"})
+18查看文档
+	db.testCollection.find({"name":"zhangsan"})
+
+19我们也可以定义一个变量
+	> document=({title: 'MongoDB 教程', 
+	 description: 'MongoDB 是一个 Nosql 数据库',
+	 by: '菜鸟教程',
+	 url: 'http://www.runoob.com',
+	 tags: ['mongodb', 'database', 'NoSQL'],
+	 likes: 100
+});
+	db.testCollection.insert(document)
+20 save方法包括insert  还可以指定_id字段
+	db.col.save(document) 
+
+21 一次插入多条数据
+	db.testCollection.insertOne({"name":"1"})
+	db.testCollection.insertMany([{"name":"1","age":"19"},{"name":"2","age":"18","sex":"0"}])
+	db.testCollection.insert(arr)
+22 update更新标题
+	db.testcollection.update(
+	   <query>,
+	   <update>,
+	   {
+	     upsert: <boolean>,
+	     multi: <boolean>,
+	     writeConcern: <document>
+	   }
+	)
+	query: where后面
+	update: set后面
+	upsert：没有数据直接插入 默认不插入
+	multi：查出多个 全改
+	writeoncern:可写日志
+	db.testCollection.update({"title":"亚太"},{$set:{"title":"亚太财险"}},{multi:true})
+
+	全部更新 db.testCollection.update( { "count" : { $gt : 3 } } , { $set : { "test2" : "OK"} },false,true ); 
+	
+23 save替换原有文档
+	db.testCollection.save({
+		"_id":ObjectId("64d6s8www33s3w12w3w"),
+		"title":"aa",
+		"tags":[
+			"mongod",
+			"mongodb"
+		],
+		"like":110
+	})
+24 删除文档
+	db.testCollection.remove({"title":"Mongodb教程"})
+25删除所有文档数据
+	db.testCollection.remove({})
+	但是现在remove过时了  因为它不能及时释放资源  需要继续执行 db.repairDatabase() 来回收磁盘空间。
+	我们采取delectOne,delectMany
+	db.testCollection.delectOne({"title":"Mongodb"})
+	db.testCollection.delectMany({"title":"Mongodb"})
+26 查询文档
+	db.testCollection.find().pretty() 文档格式化
+	db.testCollection.find({"age":{$lt:27,$gte:18}}),pretty()
+	db.testCollection.find({"like":"money",$or:[{"age":50},{"title":"mongodb"}]})
+
+	若不指定 projection，则默认返回所有键，指定 projection 格式如下，有两种模式
+	db.testCollection.find({"title":"Mongod","by":"girl"},{"title":1,"by":1}) 指定返回的键 默认
+	db.testCollection.find({"title":"Mongod","by":"girl"},{"title":0,"by":0}) 指定不返回的键 (就这俩字段不返回 剩下的都返回 用处一般)
+
+27 $type  根据类型搜索 这个很猛
+	db.testCollection.find({"title":{$type:2}})  或者
+	db.testCollection.find({"title":{$type:'string'}})
+28 limit
+	db.testCollection.find({"title":"Mongodb"}).limit(10)
+29 skip
+	db.testCollection.find({"title":"Mongodb"}).limit(10).skip(10)  从20条开始 显示10   (小数据量可以  大数据量效率低)
+30 sort()
+	db.testCollection.find({"title":"Mongodb"}).sort({"age":1})
+
+31 模糊查询
+	db.testCollection.find({title：/教/}) 有教的
+	db.testCollection.find({title: /^教/})以教开头的
+	db.testCollection.find({title：/教$/}) 以教结尾的
+32创建索引
+	db.testCollection.createIndex({"title":1})
+33复合索引
+	db.testCollection.createIndex({"title":1,"by":1},{unique:true})
+34得到索引的集合
+	db.testCollection.getIndexs()  得到索引集合
+	db.testCollection.totalIndexSize() 索引大小
+	db.testCollection.dropIndexs() 删除集合中所有的索引
+	db.testCollection.dropIndex("title") 删除集合中指定索引
+
+	利用 TTL 集合对存储的数据进行失效时间设置
+	db.col.createIndex({"createDate": 1},{expireAfterSeconds: 180})  设置在创建记录后，180 秒左右删除。
+	由记录中设定日期点清除。
+	db.col.createIndex({"ClearUpDate": 1},{expireAfterSeconds: 0})
+
+35 聚合函数
+	db.testCollection.aggregate({[$group:{"ssid":"$by_user","s_name":{$sum:1}}]})
+36 按日、按月、按年、按周、按小时、按分钟聚合操作如下
+	db.getCollection('m_msg_tb').aggregate(
+	[
+  	  {$match:{m_id:10001,mark_time:{$gt:new Date(2017,8,0)}}},
+   	 {$group: {
+  	     _id: {$dayOfMonth:'$mark_time'},
+  	      pv: {$sum: 1}
+	 	      }
+  	  },
+ 	   {$sort: {"_id": 1}}
+	])
+	     $dayOfYear: 返回该日期是这一年的第几天（全年 366 天）。
+    	$dayOfMonth: 返回该日期是这一个月的第几天（1到31）。
+    	$dayOfWeek: 返回的是这个周的星期几（1：星期日，7：星期六）。
+    	$year: 返回该日期的年份部分。
+   	 $month： 返回该日期的月份部分（ 1 到 12）。
+   	 $week： 返回该日期是所在年的第几个星期（ 0 到 53）。
+   	 $hour： 返回该日期的小时部分。
+    	$minute: 返回该日期的分钟部分。
+    	$second: 返回该日期的秒部分（以0到59之间的数字形式返回日期的第二部分，但可以是60来计算闰秒）。
+   	 $millisecond：返回该日期的毫秒部分（ 0 到 999）。
+   	 $dateToString： { $dateToString: { format: , date: } }。
+
+
+37 查询内嵌文档中的值
+	db.getCollection('insuranceDischargeMsxfDTO').find({"data.sumGrossPremium":"6.20"})
+
+38 向内嵌文档中的集合去加入一个值
+	db.stus.update({"username:tangseng"},{$push:{"hobby.movie":"Interstall"}})
+	 
+	加入不重复的元素
+	$addToSet
+
